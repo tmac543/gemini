@@ -7,7 +7,7 @@ import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { FileWithStatus } from './file-item';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { cn, getDownloadFilename } from '@/lib/utils';
 
 interface DownloadButtonProps {
     files: FileWithStatus[];
@@ -28,8 +28,7 @@ export function DownloadButton({ files, className }: DownloadButtonProps) {
 
             completedFiles.forEach((file) => {
                 if (file.convertedBlob) {
-                    const extension = file.outputFormat === 'image/png' ? 'png' : 'jpg';
-                    const fileName = file.file.name.replace(/\.(heic|heif)$/i, '') + `.${extension}`;
+                    const fileName = getDownloadFilename(file.file.name, file.convertedBlob);
                     zip.file(fileName, file.convertedBlob);
                 }
             });

@@ -3,7 +3,7 @@
 import { FileIcon, Loader2, CheckCircle2, XCircle, Download, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { formatBytes } from '@/lib/utils';
+import { formatBytes, getDownloadFilename, downloadBlob } from '@/lib/utils';
 import { saveAs } from 'file-saver';
 
 export type FileStatus = 'pending' | 'processing' | 'done' | 'error';
@@ -26,9 +26,9 @@ interface FileItemProps {
 export function FileItem({ fileData, onRemove }: FileItemProps) {
     const handleDownload = () => {
         if (fileData.convertedBlob) {
-            const extension = fileData.outputFormat === 'image/png' ? 'png' : 'jpg';
-            const fileName = fileData.file.name.replace(/\.(heic|heif)$/i, '') + `.${extension}`;
-            saveAs(fileData.convertedBlob, fileName);
+            // Use the shared utility to get the correct filename with extension
+            const fileName = getDownloadFilename(fileData.file.name, fileData.convertedBlob);
+            downloadBlob(fileData.convertedBlob, fileName);
         }
     };
 

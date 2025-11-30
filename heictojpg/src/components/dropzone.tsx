@@ -1,8 +1,6 @@
-'use client';
-
 import { useCallback } from 'react';
 import { useDropzone, FileRejection, DropEvent } from 'react-dropzone';
-import { UploadCloud, FileWarning } from 'lucide-react';
+import { FilePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -46,29 +44,41 @@ export function Dropzone({
         <div
             {...getRootProps()}
             className={cn(
-                'flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-xl cursor-pointer transition-colors duration-200 ease-in-out',
+                'group relative flex flex-col items-center justify-center w-full h-80 border-2 border-dashed rounded-3xl cursor-pointer transition-all duration-300 ease-out overflow-hidden',
                 isDragActive
-                    ? 'border-primary bg-primary/5'
-                    : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50',
+                    ? 'border-primary bg-primary/5 scale-[1.02] shadow-xl shadow-primary/10'
+                    : 'border-border/60 hover:border-primary/50 hover:bg-muted/30 hover:shadow-lg hover:shadow-primary/5',
                 className
             )}
         >
             <input {...getInputProps()} />
-            <div className="flex flex-col items-center justify-center gap-4 text-center">
-                <div className="p-4 rounded-full bg-background shadow-sm ring-1 ring-muted">
+
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+            />
+
+            <div className="relative z-10 flex flex-col items-center justify-center gap-6 text-center p-8">
+                <div className={cn(
+                    "p-6 rounded-2xl bg-background shadow-sm ring-1 ring-border/50 transition-transform duration-300 group-hover:scale-110 group-hover:shadow-md",
+                    isDragActive && "scale-110 ring-primary/50 shadow-primary/20"
+                )}>
                     {isDragActive ? (
-                        <UploadCloud className="w-8 h-8 text-primary animate-bounce" />
+                        <FilePlus className="w-10 h-10 text-primary animate-pulse" />
                     ) : (
-                        <UploadCloud className="w-8 h-8 text-muted-foreground" />
+                        <FilePlus className="w-10 h-10 text-muted-foreground group-hover:text-primary transition-colors" />
                     )}
                 </div>
-                <div className="space-y-1">
-                    <p className="text-lg font-medium text-foreground">
-                        {isDragActive ? 'Drop files here' : text}
+                <div className="space-y-2 max-w-md">
+                    <p className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
+                        {isDragActive ? 'Drop files now' : text}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-base text-muted-foreground/80">
                         {subText}
                     </p>
+                </div>
+                <div className="px-4 py-2 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                    Processed locally on your device
                 </div>
             </div>
         </div>
