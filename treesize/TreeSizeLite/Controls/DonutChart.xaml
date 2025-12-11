@@ -1,0 +1,29 @@
+<UserControl
+    x:Class="TreeSizeLite.Controls.DonutChart"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:TreeSizeLite.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid>
+        <!-- Chart Canvas -->
+        <Canvas x:Name="ChartCanvas" HorizontalAlignment="Center" VerticalAlignment="Center" Width="200" Height="200"/>
+        
+        <!-- Center Text -->
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock x:Name="CenterText" 
+                       Text="0%" 
+                       FontSize="24" 
+                       FontWeight="Bold" 
+                       HorizontalAlignment="Center"
+                       Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+            <TextBlock x:Name="CenterLabel" 
+                       Text="Usage" 
+                       FontSize="12" 
+                       HorizontalAlignment="Center"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

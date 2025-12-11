@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "TreeSizeLite (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "TreeSizeLite (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

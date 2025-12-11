@@ -1,0 +1,448 @@
+<Page
+    x:Class="TreeSizeLite.Views.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:TreeSizeLite.Controls"
+    xmlns:models="using:TreeSizeLite.Models"
+    xmlns:converters="using:TreeSizeLite.Converters"
+    xmlns:controls="using:TreeSizeLite.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Page.Resources>
+        <converters:FileSizeConverter x:Key="FileSizeConverter"/>
+        <converters:SizeToColorConverter x:Key="SizeToColorConverter"/>
+        
+        <!-- Gradient Brushes -->
+        <LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#0078D4" Offset="0"/>
+            <GradientStop Color="#005A9E" Offset="1"/>
+        </LinearGradientBrush>
+        
+
+        <!-- Animation Storyboards -->
+        <Storyboard x:Name="EntranceAnimation">
+            <DoubleAnimation Storyboard.TargetName="MainGrid" 
+                             Storyboard.TargetProperty="Opacity"
+                             From="0" To="1" Duration="0:0:0.6"/>
+            <DoubleAnimation Storyboard.TargetName="MainGrid" 
+                             Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                             From="30" To="0" Duration="0:0:0.6">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+
+        <Storyboard x:Name="SkeletonPulseAnimation" RepeatBehavior="Forever" AutoReverse="True">
+            <DoubleAnimation Storyboard.TargetName="DetailsLoadingSkeleton" 
+                             Storyboard.TargetProperty="Opacity"
+                             From="0.4" To="0.8" Duration="0:0:1"/>
+        </Storyboard>
+
+        <SolidColorBrush x:Key="SkeletonBrush" Color="{ThemeResource SystemListLowColor}"/>
+    </Page.Resources>
+
+    <Grid x:Name="MainGrid" Background="Transparent" Loaded="MainGrid_Loaded">
+        <Grid.RenderTransform>
+            <TranslateTransform/>
+        </Grid.RenderTransform>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Top Command Bar -->
+        <Border BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="20,14">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0" Opacity="0.6">
+                    <GradientStop Color="{ThemeResource CardBackgroundFillColorDefault}" Offset="0"/>
+                    <GradientStop Color="{ThemeResource LayerFillColorDefault}" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <Button x:Name="PickFolderButton" 
+                        Click="PickFolderButton_Click"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Padding="16,8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE8B7;" FontSize="14"/>
+                        <TextBlock Text="Scan Directory" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Button>
+                
+                <StackPanel Grid.Column="1" 
+                            VerticalAlignment="Center" 
+                            Margin="20,0,0,0"
+                            Spacing="2">
+                    <TextBlock x:Name="StatusTextBlock" FontSize="13" FontWeight="Medium"/>
+                    <TextBlock x:Name="PathTextBlock"
+                               FontSize="11"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+                
+                <!-- Action Buttons -->
+                <StackPanel Grid.Column="2" 
+                            Orientation="Horizontal" 
+                            Spacing="8">
+                    
+                    <!-- Theme Switcher -->
+                    <Button ToolTipService.ToolTip="Change Theme">
+                        <Button.Content>
+                            <FontIcon Glyph="&#xE790;" FontSize="16"/>
+                        </Button.Content>
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Text="Light" Tag="Light" Click="Theme_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE706;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Text="Dark" Tag="Dark" Click="Theme_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE708;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutSeparator />
+                                <MenuFlyoutItem Text="System" Tag="Default" Click="Theme_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE90E;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+
+                    <AppBarSeparator />
+
+                    <!-- Search Box -->
+                    <AutoSuggestBox x:Name="SearchBox"
+                                    PlaceholderText="Search folders..."
+                                    Width="200"
+                                    QueryIcon="Find"
+                                    TextChanged="SearchBox_TextChanged"/>
+                    
+                    <!-- Sort Button -->
+                    <Button ToolTipService.ToolTip="Sort Options">
+                        <Button.Content>
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon Glyph="&#xE8CB;" FontSize="14"/>
+                                <TextBlock Text="Sort"/>
+                            </StackPanel>
+                        </Button.Content>
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Text="By Size (Largest First)" Click="SortBySize_Click"/>
+                                <MenuFlyoutItem Text="By Name (A-Z)" Click="SortByName_Click"/>
+                                <MenuFlyoutItem Text="By File Count" Click="SortByFileCount_Click"/>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                    
+                    <!-- Export Button -->
+                    <Button Click="Export_Click" ToolTipService.ToolTip="Export to CSV">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xE74E;" FontSize="14"/>
+                            <TextBlock Text="Export"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Dual Panel Layout -->
+        <Grid Grid.Row="1" Margin="20,16,20,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" MinWidth="350"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="1*" MinWidth="280"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Panel: Tree View -->
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="0"
+                    Translation="0,0,16">
+                <Border.Shadow>
+                    <ThemeShadow />
+                </Border.Shadow>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <Border Background="{ThemeResource LayerFillColorDefaultBrush}"
+                            Padding="16,12"
+                            CornerRadius="8,8,0,0">
+                        <TextBlock Text="FOLDER TREE" 
+                                   FontWeight="SemiBold" 
+                                   FontSize="12" 
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </Border>
+
+                    <TreeView x:Name="FolderTreeView" 
+                              Grid.Row="1"
+                              SelectionMode="Single" 
+                              Expanding="FolderTreeView_Expanding"
+                              SelectionChanged="FolderTreeView_SelectionChanged"
+                              Padding="8">
+                        <TreeView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Height="36" 
+                                  Padding="4"
+                                  Background="Transparent"
+                                  PointerEntered="TreeItem_PointerEntered"
+                                  PointerExited="TreeItem_PointerExited"
+                                  RightTapped="TreeItem_RightTapped"
+                                  DoubleTapped="TreeItem_DoubleTapped">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="100"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
+                                        <FontIcon Glyph="&#xE8B7;" FontSize="16" Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                                        <TextBlock Text="{Binding Content.Name}" 
+                                                   VerticalAlignment="Center" 
+                                                   TextTrimming="CharacterEllipsis" 
+                                                   ToolTipService.ToolTip="{Binding Content.Path}"
+                                                   FontSize="12"/>
+                                    </StackPanel>
+                                    
+                                    <TextBlock Text="{Binding Content.Size, Converter={StaticResource FileSizeConverter}}" 
+                                               Grid.Column="1" 
+                                               VerticalAlignment="Center" 
+                                               HorizontalAlignment="Right" 
+                                               FontSize="11"
+                                               FontWeight="Bold"
+                                               Foreground="{Binding Content.Size, Converter={StaticResource SizeToColorConverter}}"
+                                               Margin="0,0,8,0"/>
+                                </Grid>
+                            </DataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                </Grid>
+            </Border>
+
+            <!-- Right Panel: Details -->
+            <Border Grid.Column="2"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="0"
+                    Translation="0,0,16">
+                <Border.Shadow>
+                    <ThemeShadow />
+                </Border.Shadow>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <Border Background="{ThemeResource LayerFillColorDefaultBrush}"
+                            Padding="16,12"
+                            CornerRadius="8,8,0,0">
+                        <TextBlock Text="DETAILS" 
+                                   FontWeight="SemiBold" 
+                                   FontSize="12" 
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </Border>
+
+                    <ScrollViewer x:Name="DetailsScrollViewer" Grid.Row="1" Padding="16,16,16,20">
+                        <StackPanel Spacing="12">
+                            <!-- Selected Item Info Card -->
+                            <Border x:Name="InfoCard"
+                                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="16"
+                                    RenderTransformOrigin="0.5,0.5"
+                                    PointerEntered="Card_PointerEntered"
+                                    PointerExited="Card_PointerExited">
+                                <Border.RenderTransform>
+                                    <CompositeTransform/>
+                                </Border.RenderTransform>
+                                <StackPanel Spacing="12">
+                                    <TextBlock Text="SELECTED FOLDER" 
+                                               FontSize="11" 
+                                               FontWeight="SemiBold"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               CharacterSpacing="100"/>
+                                    
+                                    <StackPanel Spacing="8">
+                                        <TextBlock x:Name="DetailNameText" 
+                                                   FontSize="14" 
+                                                   FontWeight="SemiBold"
+                                                   TextWrapping="Wrap"/>
+                                        <TextBlock x:Name="DetailPathText" 
+                                                   FontSize="10" 
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                   TextWrapping="Wrap"
+                                                   Opacity="0.8"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Stats Card -->
+                            <Border x:Name="StatsCard"
+                                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="16"
+                                    RenderTransformOrigin="0.5,0.5"
+                                    PointerEntered="Card_PointerEntered"
+                                    PointerExited="Card_PointerExited">
+                                <Border.RenderTransform>
+                                    <CompositeTransform/>
+                                </Border.RenderTransform>
+                                <StackPanel Spacing="12">
+                                    <TextBlock Text="STATISTICS" 
+                                               FontSize="11" 
+                                               FontWeight="SemiBold"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               CharacterSpacing="100"/>
+                                    
+                                    <StackPanel Spacing="10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Size" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                            <TextBlock x:Name="DetailSizeText" Grid.Column="1" FontSize="14" FontWeight="Bold"/>
+                                        </Grid>
+                                        
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Files" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                            <TextBlock x:Name="DetailFilesText" Grid.Column="1" FontSize="12" FontWeight="SemiBold"/>
+                                        </Grid>
+                                        
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Folders" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                            <TextBlock x:Name="DetailFoldersText" Grid.Column="1" FontSize="12" FontWeight="SemiBold"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Usage Card -->
+                            <Border x:Name="UsageCard"
+                                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="16"
+                                    RenderTransformOrigin="0.5,0.5"
+                                    PointerEntered="Card_PointerEntered"
+                                    PointerExited="Card_PointerExited">
+                                <Border.RenderTransform>
+                                    <CompositeTransform/>
+                                </Border.RenderTransform>
+                                <StackPanel Spacing="12">
+                                    <TextBlock Text="DISK USAGE" 
+                                               FontSize="11" 
+                                               FontWeight="SemiBold"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               CharacterSpacing="100"/>
+                                    
+                                    <Viewbox Height="160">
+                                        <controls:DonutChart x:Name="UsageChart" />
+                                    </Viewbox>
+                                    
+                                    <TextBlock x:Name="DetailUsageText" 
+                                               FontSize="11" 
+                                               HorizontalAlignment="Center"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               FontWeight="Medium"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- Skeleton Loading State -->
+                    <Grid x:Name="DetailsLoadingSkeleton" Grid.Row="1" Padding="16,16,16,20" Visibility="Collapsed">
+                        <StackPanel Spacing="12">
+                            <!-- Skeleton Card 1 -->
+                            <Border Background="{ThemeResource LayerFillColorDefaultBrush}" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" CornerRadius="6" Padding="16">
+                                <StackPanel Spacing="12">
+                                    <Rectangle Height="14" Width="100" HorizontalAlignment="Left" Fill="{StaticResource SkeletonBrush}" RadiusX="2" RadiusY="2"/>
+                                    <StackPanel Spacing="8">
+                                        <Rectangle Height="20" Width="200" HorizontalAlignment="Left" Fill="{StaticResource SkeletonBrush}" RadiusX="4" RadiusY="4"/>
+                                        <Rectangle Height="12" Width="150" HorizontalAlignment="Left" Fill="{StaticResource SkeletonBrush}" RadiusX="2" RadiusY="2"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                            <!-- Skeleton Card 2 -->
+                            <Border Background="{ThemeResource LayerFillColorDefaultBrush}" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" CornerRadius="6" Padding="16">
+                                <StackPanel Spacing="12">
+                                    <Rectangle Height="14" Width="80" HorizontalAlignment="Left" Fill="{StaticResource SkeletonBrush}" RadiusX="2" RadiusY="2"/>
+                                    <StackPanel Spacing="10">
+                                        <Grid><Rectangle Height="16" Fill="{StaticResource SkeletonBrush}" RadiusX="2" RadiusY="2"/></Grid>
+                                        <Grid><Rectangle Height="16" Fill="{StaticResource SkeletonBrush}" RadiusX="2" RadiusY="2"/></Grid>
+                                        <Grid><Rectangle Height="16" Fill="{StaticResource SkeletonBrush}" RadiusX="2" RadiusY="2"/></Grid>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                            <!-- Skeleton Card 3 -->
+                            <Border Background="{ThemeResource LayerFillColorDefaultBrush}" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" CornerRadius="6" Padding="16">
+                                <StackPanel Spacing="12">
+                                    <Rectangle Height="14" Width="80" HorizontalAlignment="Left" Fill="{StaticResource SkeletonBrush}" RadiusX="2" RadiusY="2"/>
+                                    <Rectangle Height="8" Fill="{StaticResource SkeletonBrush}" RadiusX="4" RadiusY="4"/>
+                                    <Rectangle Height="14" Width="60" HorizontalAlignment="Center" Fill="{StaticResource SkeletonBrush}" RadiusX="2" RadiusY="2"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2" 
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="20,10">
+            <StackPanel Orientation="Horizontal" Spacing="24">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE8B7;" FontSize="12" Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                    <TextBlock x:Name="TotalFoldersText" Text="0 folders" FontSize="11"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE8A5;" FontSize="12" Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                    <TextBlock x:Name="TotalFilesText" Text="0 files" FontSize="11"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE7C3;" FontSize="12" Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                    <TextBlock x:Name="TotalSizeText" Text="0 B" FontSize="11" FontWeight="SemiBold"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Page>
